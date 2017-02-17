@@ -9,7 +9,7 @@ const app = express();
 // TODO: Don't forget to set your own conString if required by your system
 const conString = 'postgres://localhost:5432';
 // TODO: Using a sentence or two, describe what is happening in Line 12.
-// Put your response here...
+// Creating a new variable callback called client that is a sonstant variable. Ito it we are assigning an object that is being add to the consrtuctor pg.Client.
 const client = new pg.Client(conString);
 client.connect();
 
@@ -31,8 +31,8 @@ app.get('/new', function(request, response) {
 // TODO: Some of the following questions will refer back to the image called 'full-stack-diagram' that has been added to the lab directory. In that image you will see that the various parts of the application's activity have been numbered 1-5. When prompted in the following questions, identify which number best matches the location of a given process. For instance, the following line of code, where the server is handling a request from the view layer, would match up with #2.
 app.get('/articles', function(request, response) {
   // REVIEW: We now have two queries which create separate tables in our DB, and reference the authors in our articles.
-  // TODO: What number in the full-stack diagram best matches what is happening in lines 35-42?
-  // Put your response here...
+  // DONE: What number in the full-stack diagram best matches what is happening in lines 35-42?
+  // 3: the controller sends a SQL query to the model
   client.query(`
     CREATE TABLE IF NOT EXISTS
     authors (
@@ -51,12 +51,12 @@ app.get('/articles', function(request, response) {
       "publishedOn" DATE,
       body TEXT NOT NULL
     );`
-  ) // TODO: Referring to lines 45-52, answer the following questions:
+  ) // DONE!: Referring to lines 45-52, answer the following questions:
     // What is a primary key?
-    // Put your response here...
+    // Used to indentify items in a table that can be referenced across multiple tables that is a UNIQUE identifier for a record in a table (row number)
     // +++++++++++++++++++++
     // What does VARCHAR mean?
-    // Put your response here...
+    // VARCHAR is an SQL datatype that specifically is a string can have both numbers and characters but they are always concatinated as a string with a maximum length of the value in the parrens of VARCHAR example VARCHAR(24) will only allow the varchar string to be up to 24 characters long with a MAX LENGTH of 24 characters
     // +++++++++++++++++++++
   // REVIEW: This query will join the data together from our tables and send it back to the client.
   client.query(`
@@ -70,22 +70,22 @@ app.get('/articles', function(request, response) {
   );
 });
 
-// TODO: How is a 'post' route different than a 'get' route?
-// Put your answer here...
+// DONE: How is a 'post' route different than a 'get' route?
+// Post is a request made to the model database that actually creates new data where as get only rectrieves data already in the model database. .post can also be written with the same functionality as app.get('/databasePOST')
 app.post('/articles', function(request, response) {
   client.query(
     'INSERT INTO authors(author, "authorUrl") VALUES($1, $2) ON CONFLICT DO NOTHING', // DONE: Write a SQL query to insert a new author, ON CONFLICT DO NOTHING
     [request.body.author, request.body.authorUrl], // DONE: Add the author and "authorUrl" as data for the SQL query
     function(err) {
       if (err) console.error(err)
-      queryTwo() // This is our second query, to be executed when this first query is complete.
+      queryTwo() // This is our second query, to be executed when this first query is complete. THIS IS A CALLBACK FUNCTION!!!!!
     }
   )
 
   function queryTwo() {
     client.query(
-      // TODO: What is the purpose of the $1 in the following line of code?
-      // Put your response here...
+      // DONE: What is the purpose of the $1 in the following line of code?
+      // $1 is a placeholder for the authors name You can see how this works with multiple SQL place holders at line 77 $1 is the first place holder for first object in the Article constructor, $2 is a place holder for the second object is Article constructor, so, $3 will always refer to the body oject in the Article constructor.
       `SELECT author_id FROM authors WHERE author=$1`, // DONE: Write a SQL query to retrieve the author_id from the authors table for the new article
       [request.body.author], // DONE: Add the author name as data for the SQL query
       function(err, result) {
@@ -96,7 +96,8 @@ app.post('/articles', function(request, response) {
   }
 
   function queryThree(author_id) {
-      // TODO: What number in the full-stack diagram best matches what is happening in line 100?
+      // DONE: What number in the full-stack diagram best matches what is happening in line 100?
+      // 3: the controller (server) is dispatching a query to the model (our database)
     client.query(
       `INSERT INTO
       articles(author_id, title, category, "publishedOn", body)
@@ -111,6 +112,7 @@ app.post('/articles', function(request, response) {
       function(err) {
         if (err) console.error(err);
         // TODO: What number in the full-stack diagram best matches what is happening in line 114?
+        // 5: the controller (server) is sending information back to the view
         response.send('insert complete');
       }
     );
@@ -130,7 +132,10 @@ app.put('/articles/:id', function(request, response) {
 
   function queryTwo(author_id) {
     client.query(
-      // TODO: In a sentence or two, describe how a SQL 'UPDATE' is different from an 'INSERT', and identify which REST verbs and which CRUD components align with them.
+      // DONE: In a sentence or two, describe how a SQL 'UPDATE' is different from an 'INSERT', and identify which REST verbs and which CRUD components align with them.
+      // UPDATE = alters or modifies an existing record = REST: PUT/PATCH
+        //REST is a set of SQL guidelines BUT NOT A RULE SET It's bascally just good symantic naming This is the U in C.R.U.D.
+      // INSERT = creates a new record; REST = POST; C.R.U.D. = C;
       `UPDATE authors
       SET author=$1, "authorUrl"=$2
       WHERE author_id=$3;`, // DONE: Write a SQL query to update an existing author record
@@ -159,16 +164,19 @@ app.put('/articles/:id', function(request, response) {
   }
 });
 
-  // TODO: What number in the full-stack diagram best matches what is happening in line 163?
+  // DONE: What number in the full-stack diagram best matches what is happening in line 163?
+  // 2: a request sent from the view (an event) is directed to the controller (server); the listener invokes the appropriate handler)
 app.delete('/articles/:id', function(request, response) {
-    // TODO: What number in the full-stack diagram best matches what is happening in lines 165?
+    // DONE: What number in the full-stack diagram best matches what is happening in lines 165?
+    //3: the controller giving a reuqest to the model
   client.query(
     `DELETE FROM articles WHERE article_id=$1;`,
     // TODO: What does the value in 'request.params.id' come from? If unsure, look in the Express docs.
-    // Put your response here...
+    // It come from the :id which is in the URL of the ajax request (article.js function artilce.fetchALL line 34) ('/articles/:id') and it becomes the $1 (server.js line 173) that is sent off to the database.
     [request.params.id]
   );
   // TODO: What number in the full-stack diagram best matches what is happening in line 171?
+  // 5
   response.send('Delete complete');
 });
 
